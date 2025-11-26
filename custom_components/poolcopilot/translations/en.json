@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pool Copilot Setup",
+        "description": "Enter your Pool Copilot API credentials",
+        "data": {
+          "api_key": "API Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Pool Copilot API",
+      "invalid_auth": "Invalid API key",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This Pool Copilot account is already configured"
+    }
+  }
+}

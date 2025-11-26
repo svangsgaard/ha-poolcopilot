@@ -1,0 +1,24 @@
+# Example Lovelace card for Pool Copilot
+
+type: entities
+title: Pool Monitor
+entities:
+  - entity: switch.pump
+    name: Pump
+  - entity: select.pump_speed
+    name: Pump Speed
+  - entity: sensor.water_temperature
+    name: Water Temperature
+  - entity: sensor.air_temperature
+    name: Air Temperature
+  - entity: sensor.ph_level
+    name: pH Level
+  - entity: sensor.orp
+    name: ORP
+  - entity: sensor.pressure
+    name: Pressure
+  - type: section
+  - entity: switch.pool_light
+    name: Pool Light
+  - entity: switch.garden_1
+    name: Garden Light
