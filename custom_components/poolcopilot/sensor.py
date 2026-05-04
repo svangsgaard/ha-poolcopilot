@@ -20,7 +20,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api import PoolCopilotApiClient
-from .const import DOMAIN, SCAN_INTERVAL_SECONDS, SENSOR_TYPES
+from .const import CONF_SCAN_INTERVAL, DOMAIN, SCAN_INTERVAL_SECONDS, SENSOR_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +33,17 @@ async def async_setup_entry(
     """Set up Pool Copilot sensors from a config entry."""
     api_client: PoolCopilotApiClient = hass.data[DOMAIN][entry.entry_id]
 
-    coordinator = PoolCopilotDataUpdateCoordinator(hass, api_client)
+    scan_interval_seconds = entry.options.get(
+        CONF_SCAN_INTERVAL,
+        entry.data.get(
+            CONF_SCAN_INTERVAL,
+            hass.data[DOMAIN].get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_SECONDS),
+        ),
+    )
+
+    coordinator = PoolCopilotDataUpdateCoordinator(
+        hass, api_client, scan_interval_seconds
+    )
     await coordinator.async_config_entry_first_refresh()
     
     # Store coordinator for use by other platforms
@@ -50,13 +60,18 @@ async def async_setup_entry(
 class PoolCopilotDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Pool Copilot data."""
 
-    def __init__(self, hass: HomeAssistant, api_client: PoolCopilotApiClient) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        api_client: PoolCopilotApiClient,
+        scan_interval_seconds: int,
+    ) -> None:
         """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=SCAN_INTERVAL_SECONDS),
+            update_interval=timedelta(seconds=scan_interval_seconds),
         )
         self.api_client = api_client
 

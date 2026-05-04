@@ -17,5 +17,15 @@
     "abort": {
       "already_configured": "This Pool Copilot account is already configured"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pool Copilot Options",
+        "data": {
+          "scan_interval": "Scan interval (seconds)"
+        }
+      }
+    }
   }
 }

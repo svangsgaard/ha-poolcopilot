@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import PoolCopilotApiClient
-from .const import DOMAIN
+from .const import CONF_SCAN_INTERVAL, DOMAIN, SCAN_INTERVAL_SECONDS
 from .sensor import PoolCopilotDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,16 @@ async def async_setup_entry(
     # Get the coordinator from sensor platform data
     coordinator_key = f"{entry.entry_id}_coordinator"
     if coordinator_key not in hass.data[DOMAIN]:
-        coordinator = PoolCopilotDataUpdateCoordinator(hass, api_client)
+        scan_interval_seconds = entry.options.get(
+            CONF_SCAN_INTERVAL,
+            entry.data.get(
+                CONF_SCAN_INTERVAL,
+                hass.data[DOMAIN].get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_SECONDS),
+            ),
+        )
+        coordinator = PoolCopilotDataUpdateCoordinator(
+            hass, api_client, scan_interval_seconds
+        )
         await coordinator.async_config_entry_first_refresh()
         hass.data[DOMAIN][coordinator_key] = coordinator
     else:

@@ -12,7 +12,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .api import PoolCopilotApiClient
-from .const import CONF_API_KEY, DOMAIN
+from .const import CONF_API_KEY, CONF_SCAN_INTERVAL, DOMAIN, SCAN_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +44,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> PoolCopilotOptionsFlow:
+        """Get the options flow for this handler."""
+        return PoolCopilotOptionsFlow(config_entry)
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -70,6 +75,37 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
+        )
+
+
+class PoolCopilotOptionsFlow(config_entries.OptionsFlow):
+    """Handle Pool Copilot options."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize Pool Copilot options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current_interval = self._config_entry.options.get(
+            CONF_SCAN_INTERVAL,
+            self._config_entry.data.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_SECONDS),
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SCAN_INTERVAL, default=current_interval): vol.All(
+                        vol.Coerce(int), vol.Range(min=10)
+                    )
+                }
+            ),
         )
 
 

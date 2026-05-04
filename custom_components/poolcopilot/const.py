@@ -2,6 +2,7 @@
 
 DOMAIN = "poolcopilot"
 CONF_API_KEY = "api_key"
+CONF_SCAN_INTERVAL = "scan_interval"
 
 # API Configuration
 API_BASE_URL = "https://poolcopilot.com/api/v1"
