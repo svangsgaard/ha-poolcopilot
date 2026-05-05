@@ -70,10 +70,12 @@ class PoolCopilotApiClient:
         """Make API request with automatic token refresh on expiration."""
         token = await self._get_token()
         url = f"{self._base_url}/{endpoint}"
-        headers = {
-            "PoolCop-Token": token,
-            "Content-Type": "application/json",
-        }
+        headers = {"PoolCop-Token": token}
+
+        if "json" in kwargs:
+            headers["Content-Type"] = "application/json"
+        elif "data" in kwargs:
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
 
         session = await self._get_session()
         
@@ -93,7 +95,15 @@ class PoolCopilotApiClient:
                         return await self._request(method, endpoint, retry=False, **kwargs)
                     
                     response.raise_for_status()
-                    return await response.json()
+
+                    if response.content_length == 0:
+                        return {}
+
+                    if response.content_type == "application/json":
+                        return await response.json()
+
+                    await response.read()
+                    return {}
         except aiohttp.ClientResponseError as err:
             # If we get a 403/404/429 during raise_for_status and haven't retried yet
             if err.status in (403, 404, 429) and retry:
