@@ -87,8 +87,8 @@ class PoolCopilotApiClient:
                     headers=headers,
                     **kwargs,
                 ) as response:
-                    # Check for token expiration errors (403, 404, 429)
-                    if response.status in (403, 404, 429) and retry:
+                    # Check for token expiration/rate-limit/timeout errors
+                    if response.status in (403, 404, 408, 429) and retry:
                         _LOGGER.warning("Received %s status, attempting token refresh and retry", response.status)
                         # Force refresh token and retry - don't try to parse response
                         await self._get_token(force_refresh=True)
@@ -105,8 +105,8 @@ class PoolCopilotApiClient:
                     await response.read()
                     return {}
         except aiohttp.ClientResponseError as err:
-            # If we get a 403/404/429 during raise_for_status and haven't retried yet
-            if err.status in (403, 404, 429) and retry:
+            # If we get a 403/404/408/429 during raise_for_status and haven't retried yet
+            if err.status in (403, 404, 408, 429) and retry:
                 _LOGGER.warning("Got %s error, refreshing token and retrying", err.status)
                 await self._get_token(force_refresh=True)
                 return await self._request(method, endpoint, retry=False, **kwargs)
@@ -132,13 +132,13 @@ class PoolCopilotApiClient:
                 endpoint = "command/pump"
         else:
             endpoint = "command/pump"
-        
-        return await self._request("POST", endpoint)
+
+        return await self._request("POST", endpoint, json={})
 
     async def async_set_aux(self, aux_id: int) -> dict[str, Any]:
         """Toggle auxiliary on or off."""
         endpoint = f"command/aux/{aux_id}"
-        return await self._request("POST", endpoint)
+        return await self._request("POST", endpoint, json={})
 
     async def close(self) -> None:
         """Close the API session."""
