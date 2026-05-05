@@ -104,11 +104,8 @@ class PoolCopilotPumpSwitch(CoordinatorEntity, SwitchEntity):
         try:
             await self._api_client.async_set_pump(turn_on=turn_on)
 
-            for _ in range(5):
-                await asyncio.sleep(1)
-                await self.coordinator.async_request_refresh()
-                if self._coordinator_is_on() == turn_on:
-                    break
+            await asyncio.sleep(3)
+            await self.coordinator.async_request_refresh()
         except Exception:
             self._optimistic_is_on = None
             self.async_write_ha_state()
@@ -200,11 +197,8 @@ class PoolCopilotAuxSwitch(CoordinatorEntity, SwitchEntity):
         try:
             await self._api_client.async_set_aux(self._aux_id)
 
-            for _ in range(5):
-                await asyncio.sleep(1)
-                await self.coordinator.async_request_refresh()
-                if self._coordinator_is_on() == turn_on:
-                    break
+            await asyncio.sleep(3)
+            await self.coordinator.async_request_refresh()
         except Exception:
             self._optimistic_is_on = None
             self.async_write_ha_state()

@@ -48,7 +48,7 @@ class PoolCopilotApiClient:
             async with asyncio.timeout(API_TIMEOUT):
                 async with session.post(url, headers=headers, data=data) as response:
                     response.raise_for_status()
-                    result = await response.json()
+                    result = await response.json(content_type=None)
                     self._token = result["token"]
                     self._token_timestamp = time.time()
                     _LOGGER.debug("Successfully obtained authentication token")
@@ -87,10 +87,28 @@ class PoolCopilotApiClient:
                     headers=headers,
                     **kwargs,
                 ) as response:
-                    # Check for token expiration/rate-limit/timeout errors
-                    if response.status in (403, 404, 408, 429) and retry:
+                    if response.status == 429 and retry:
+                        _LOGGER.warning("Rate limited (429), backing off 10s before retry")
+                        await asyncio.sleep(10)
+                        return await self._request(method, endpoint, retry=False, **kwargs)
+
+                    if response.status in (403, 408) and retry:
+                        # Check if it's a rate-limit disguised as 403 (code 106)
+                        try:
+                            body = await response.json(content_type=None)
+                            codes = [e.get("code") for e in body.get("errors", [])]
+                            if 106 in codes:
+                                _LOGGER.warning("Rate limited (code 106), backing off 10s before retry")
+                                await asyncio.sleep(10)
+                                return await self._request(method, endpoint, retry=False, **kwargs)
+                        except Exception:
+                            pass
                         _LOGGER.warning("Received %s status, attempting token refresh and retry", response.status)
-                        # Force refresh token and retry - don't try to parse response
+                        await self._get_token(force_refresh=True)
+                        return await self._request(method, endpoint, retry=False, **kwargs)
+
+                    if response.status == 404 and retry:
+                        _LOGGER.warning("Received 404, refreshing token and retry")
                         await self._get_token(force_refresh=True)
                         return await self._request(method, endpoint, retry=False, **kwargs)
                     
